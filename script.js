@@ -20,14 +20,41 @@ document.querySelectorAll('.nav-link, .nav-cta').forEach(link => {
 });
 
 // ── Contact form ─────────────────────────────────────
-document.getElementById('contact-form').addEventListener('submit', (e) => {
+document.getElementById('contact-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const f = e.target;
-  const mailtoLink =
-    `mailto:jayasreemuruga2605@gmail.com` +
-    `?subject=${encodeURIComponent(f.subject.value)}` +
-    `&body=${encodeURIComponent(`Name: ${f.name.value}\nEmail: ${f.email.value}\n\n${f.message.value}`)}`;
-  window.open(mailtoLink);
+  const f      = e.target;
+  const btn    = f.querySelector('.submit-btn');
+  const orig   = btn.innerHTML;
+
+  btn.disabled  = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const res = await fetch('/send', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:    f.name.value,
+        email:   f.email.value,
+        subject: f.subject.value,
+        message: f.message.value,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      btn.textContent = 'Message Sent!';
+      f.reset();
+      setTimeout(() => { btn.disabled = false; btn.innerHTML = orig; }, 3000);
+    } else {
+      btn.textContent = data.error || 'Failed. Try again.';
+      setTimeout(() => { btn.disabled = false; btn.innerHTML = orig; }, 3000);
+    }
+  } catch {
+    btn.textContent = 'Network error. Try again.';
+    setTimeout(() => { btn.disabled = false; btn.innerHTML = orig; }, 3000);
+  }
 });
 
 // ── Footer year ──────────────────────────────────────
